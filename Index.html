@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" 
+    integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <style>
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          background-image: linear-gradient(to right, rgb(20, 147, 220), rgb(17, 54, 71));}
+
+        .titulo {
+          font-weight: bold;
+        }
+        .centered-form {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+        }        
+
+        .tit-img {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding-bottom: 20px;
+          
+        }
+        .imagem-trt {
+          width: 90px;
+          height: 90px;
+        }
+        label{
+          font-weight: bold;
+        }
+ 
+
+    </style>
+    <script>
+//criado uma função addrow usada para adicionar novos registros
+    function AddRow()
+    {
+      //desabilita o botão adicionar para nao ser clicado duas vezes
+      document.getElementById("add_button").disabled = true;
+      var nomesolicitante = document.getElementById("nomesolicitante").value;
+      var qtsolicitada = document.getElementById("qtsolicitada").value;
+      var dtsolicita = document.getElementById("dtsolicita").value;
+      
+      if(nomesolicitante != '' && qtsolicitada != '')
+      {
+        google.script.run.withSuccessHandler(function(return_string) 
+        {
+          SearchRecords();
+          document.getElementById("add_button").disabled = false;
+        }).AddRecord(nomesolicitante, qtsolicitada, dtsolicita);       
+      }
+      else
+      {
+        document.getElementById("display_error").innerHTML = "Por favor, informe todos os dados!";
+        document.getElementById("add_button").disabled = false;
+      }
+    }
+    // dps de adicionado aparece as pesquisas com os nomes
+
+    // usada para limpar o formulário
+    function ClearRecord()
+    {
+        document.getElementById("nomesolicitante").value = '';
+        document.getElementById("qtsolicitada").value = '';
+        document.getElementById("dtsolicita").value = '';
+        document.getElementById("display_error").innerHTML = "";
+    }
+
+
+//A função updaterec é usada para atualizar um registro existente na planilha. 
+//row_number identifica a linha que deve ser atualizado
+    function UpdateRecord(row_number)
+    {
+      document.getElementById("update_button"+row_number).disabled = true;
+      var record_id = document.getElementById("up_record_id"+row_number).value;
+      var nomesolicitante = document.getElementById("up_nomesolicitante"+row_number).value;
+      var qtsolicitada = document.getElementById("up_qtsolicitada"+row_number).value;
+      var dtsolicita = document.getElementById("up_dtsolicita"+row_number).value;
+      
+      google.script.run.withSuccessHandler(function(return_string) 
+      {
+          document.getElementById("update_button"+row_number).disabled = false;
+      }).UpdateRecord(record_id, nomesolicitante, qtsolicitada, dtsolicita);
+    }
+
+//A função delete usada para excluir um registro existente na planilha. 
+//coleta o ID do registro e chama a função google.script.run com esse ID
+    function DeleteRecord(row_number)
+    {
+
+      var record_id = document.getElementById("up_record_id"+row_number).value;
+
+      google.script.run.withSuccessHandler(function(return_string) 
+      {
+        if(return_string == 'SUCCESS')
+        {
+          //exclui a ilinha da planilha
+          document.getElementById('mainTable').deleteRow(document.getElementById('ROWNUMBER:'+row_number).rowIndex); 
+        }
+      }).DeleteRecord(record_id);
+    }
+
+//função search pesquisa e retorna essa pesquisa em html atraves de uma variavel chamada displaytable
+    function SearchRecords() 
+    {
+      var nomesolicitante = document.getElementById("nomesolicitante").value;
+      var qtsolicitada = document.getElementById("qtsolicitada").value;
+      var dtsolicita = document.getElementById("dtsolicita").value;
+      var row_number = 0;
+
+      google.script.run.withSuccessHandler(function(ar) 
+      {
+
+        console.log(ar);
+        var displayTable = '<form>';
+        displayTable += '<table class=\"table\" id=\"mainTable\" >';
+        displayTable += "<tr>";
+        displayTable += "<th>Solicitante</th>";
+        displayTable += "<th>Quantidade Solicitada</th>";
+        displayTable += "<th>Data da Solicitação</th>";
+        displayTable += "<th></th>";
+        displayTable += "</tr>";
+
+        ar.forEach(function(item, index) 
+        {
+          displayTable += "<tr id=\"ROWNUMBER:"+ row_number +"\" >";
+          displayTable += "<td><div class=\"form-row\"><div class=\"form-group col-md-12\" ><label for=\"up_nomesolicitante\">Nome</label>  ";
+          displayTable += "<input type=\"text\" id=\"up_nomesolicitante"+ row_number +"\" value=\""+item[1]+"\" class=\"form-control\" /> ";
+          displayTable += "<input type=\"hidden\" id=\"up_record_id"+ row_number +"\" value=\""+item[0]+"\" /></div></div> ";
+          displayTable += "<td><div class=\"form-row\"><div class=\"form-group col-md-12\"><label for=\"up_qtsolicitada\">Quantidade</label> ";
+          displayTable += "<input type=\"text\" id=\"up_qtsolicitada"+ row_number +"\" value=\""+item[2]+"\" class=\"form-control\" /></div></div> ";
+
+          displayTable += "<td><div class=\"form-row\"><div class=\"form-group col-md-6\"><label for=\"up_dtsolicita\">Data</label> ";
+          displayTable += "<input type=\"text\" id=\"up_dtsolicita"+ row_number +"\" value=\""+item[3]+"\" class=\"form-control\" /></div></div> ";
+
+          displayTable += "<td><div style=\"padding: 5px\"> ";
+          displayTable += "<input type=\"button\" id=\"update_button"+ row_number +"\" value=\"Alterar\" class=\"btn btn-primary\" ";
+          displayTable += "onclick=\"UpdateRecord("+row_number+")\" /></div> ";
+
+          displayTable += "<div style=\"padding: 5px\" > ";
+          displayTable += "<input type=\"button\" value=\"Excluir\" id=\"delete_button"+ row_number +"\"  class=\"btn btn-primary\" ";
+          displayTable += "onclick=\"DeleteRecord("+row_number+")\" /></div> ";
+
+          displayTable += "</td>";
+          displayTable += "</tr>";
+          row_number++;    
+        });
+
+        displayTable += '</table></form>';     
+        document.getElementById("rowdata").innerHTML = displayTable;
+
+      }).searchRecords(nomesolicitante, qtsolicitada, dtsolicita);
+      
+    }
+    </script>
+  </head>
+  <body>
+  <div style="padding: 10px;" >
+  <form  class="centered-form">
+    <div class= "container">
+    <div class="tit-img">
+    <img class="imagem-trt" src="https://yt3.googleusercontent.com/v6IVw_6TjfV7ibYXViju9teGltZeZ3YciTtwVxW3JqBaGfRZ4jNi5n8pc4Dt-LmA_4Kfs-8r6l4=s900-c-k-c0x00ffffff-no-rj" />
+    <p class="titulo">CONTROLE DE COPOS</p>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-5">
+            <label for="nomesolicitante">Nome do Solicitante</label>
+            <input type="text" id="nomesolicitante" class="form-control" />
+        </div>  
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-1">
+            <label for="qtsolicitada">Quantidade</label>
+            <input type="text" id="qtsolicitada" class="form-control" />
+        </div> 
+        <div class="form-group col-md-2">
+            <label for="dtsolicita">Data</label>
+            <input type="text" id="dtsolicita" class="form-control" />
+        </div>
+    </div>
+    
+    <div class="form-group col-md-6">
+        <input type="button" value="Localizar" class="btn btn-primary" onclick="SearchRecords()" />
+        <input type="button" value="Adicionar" class="btn btn-primary" onclick="AddRow()" id="add_button" />
+        <input type="button" value="Limpar" class="btn btn-primary" onclick="ClearRecord()" />
+        <input type="button" value="Exportar relatório" class="btn btn-primary" onclick="google.script.run.exportData()" />
+        <div id="display_error" style="color: red" ></div>
+    </div>
+    </div> 
+  </form> 
+  <div id="rowdata"></div>
+  </div>
+  </body>
+</html>
