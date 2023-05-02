@@ -1,5 +1,5 @@
 function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile('Index'); //chama o arquivo index.html para receber os dados
+  return HtmlService.createHtmlOutputFromFile('Index'); //chama o arquivo index.html 
 }
 
 function uuid() { //declara uma função uuid para retornar o id do registro
